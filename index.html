@@ -160,6 +160,44 @@
 
   .error { color: #e57373; font-size: 0.9rem; text-align: center; margin-top: 12px; }
 
+  .key-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    align-items: center;
+  }
+
+  .key-bar input {
+    flex: 1;
+    padding: 10px 14px;
+    background: #111827;
+    border: 1px solid #1e2a42;
+    border-radius: 8px;
+    color: #e8e4dc;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .key-bar input:focus { border-color: #3b5998; }
+  .key-bar input::placeholder { color: #4a5568; }
+
+  .key-bar button {
+    padding: 10px 16px;
+    background: #1a2744;
+    border: 1px solid #2a3f6a;
+    border-radius: 8px;
+    color: #c5cfe0;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .key-bar button:hover { background: #243358; color: #fff; }
+
+  .key-bar .status { font-size: 0.78rem; color: #5a6a8a; white-space: nowrap; }
+  .key-bar .status.saved { color: #6abf69; }
+
   footer {
     text-align: center;
     padding: 24px;
@@ -180,6 +218,11 @@
 </header>
 
 <main>
+  <div class="key-bar" id="keyBar">
+    <input type="password" id="apiKeyInput" placeholder="Paste your Anthropic API key (sk-ant-...)" />
+    <button id="saveKey">Save</button>
+    <span class="status" id="keyStatus"></span>
+  </div>
   <div class="input-area">
     <textarea id="question" placeholder="What would you like to ask the General?&#10;&#10;e.g. What do you think about NATO expansion in Eastern Europe?"></textarea>
     <button id="ask">Consult the General</button>
@@ -195,7 +238,32 @@
 <footer>An exercise in historical perspective. Powered by AI.</footer>
 
 <script>
-const API_KEY = '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';
+// API key stored in browser localStorage — never sent to GitHub
+let API_KEY = localStorage.getItem('dgk') || '';
+
+const apiKeyInput = document.getElementById('apiKeyInput');
+const saveKeyBtn = document.getElementById('saveKey');
+const keyStatus = document.getElementById('keyStatus');
+
+if (API_KEY) {
+  apiKeyInput.value = '••••••••••••••••••••';
+  keyStatus.textContent = '✓ Key saved';
+  keyStatus.classList.add('saved');
+}
+
+saveKeyBtn.addEventListener('click', () => {
+  const k = apiKeyInput.value.trim();
+  if (k && k.startsWith('sk-ant-')) {
+    localStorage.setItem('dgk', k);
+    API_KEY = k;
+    apiKeyInput.value = '••••••••••••••••••••';
+    keyStatus.textContent = '✓ Key saved';
+    keyStatus.classList.add('saved');
+  } else {
+    keyStatus.textContent = 'Invalid key';
+    keyStatus.classList.remove('saved');
+  }
+});
 
 const SYSTEM_PROMPT = `You are Charles de Gaulle — the statesman, general, founder of the Fifth Republic, and author of "The Edge of the Sword" (Le Fil de l'Épée), "War Memoirs," and "Memoirs of Hope."
 
@@ -231,6 +299,7 @@ const errorEl = document.getElementById('error');
 btn.addEventListener('click', async () => {
   const q = textarea.value.trim();
   if (!q) return;
+  if (!API_KEY) { errorEl.textContent = 'Please enter your Anthropic API key above first.'; return; }
 
   errorEl.textContent = '';
   btn.disabled = true;
