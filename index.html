@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>De Gaulle Speaks</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0f1a;
+    color: #e8e4dc;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    text-align: center;
+    padding: 60px 20px 30px;
+    max-width: 700px;
+  }
+
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    color: #ffffff;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  header .subtitle {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: #8a9ab5;
+    margin-bottom: 24px;
+  }
+
+  header p.intro {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: #99a3b8;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .tricolore {
+    width: 120px;
+    height: 3px;
+    margin: 28px auto;
+    background: linear-gradient(90deg, #002395 33%, #fff 33% 66%, #ED2939 66%);
+    border-radius: 2px;
+  }
+
+  main {
+    width: 100%;
+    max-width: 680px;
+    padding: 0 20px 60px;
+    flex: 1;
+  }
+
+  .input-area {
+    position: relative;
+    margin-bottom: 32px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 18px 20px;
+    background: #111827;
+    border: 1px solid #1e2a42;
+    border-radius: 12px;
+    color: #e8e4dc;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  textarea:focus { border-color: #3b5998; }
+
+  textarea::placeholder { color: #4a5568; }
+
+  button#ask {
+    display: block;
+    margin: 16px auto 0;
+    padding: 12px 36px;
+    background: #1a2744;
+    border: 1px solid #2a3f6a;
+    border-radius: 8px;
+    color: #c5cfe0;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  button#ask:hover { background: #243358; border-color: #3b5998; color: #fff; }
+  button#ask:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .response-area {
+    display: none;
+    background: #111827;
+    border: 1px solid #1e2a42;
+    border-radius: 12px;
+    padding: 28px 24px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .response-area.visible { display: block; }
+
+  .response-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    color: #5a6a8a;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .response-text {
+    font-size: 0.95rem;
+    line-height: 1.85;
+    color: #cfd5e0;
+    white-space: pre-wrap;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 24px;
+    color: #5a6a8a;
+    font-style: italic;
+  }
+
+  .loading::after {
+    content: '';
+    animation: dots 1.5s steps(3) infinite;
+  }
+
+  @keyframes dots {
+    0% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .error { color: #e57373; font-size: 0.9rem; text-align: center; margin-top: 12px; }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 0.75rem;
+    color: #3a4560;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>De Gaulle Speaks</h1>
+  <p class="subtitle">"La France ne peut être la France sans la grandeur."</p>
+  <div class="tricolore"></div>
+  <p class="intro">
+    Ask about any current event in world affairs, international relations, politics, or military matters — and receive an answer as Charles de Gaulle would have given it, drawn from his writings, speeches, philosophy, and lifelong vision for France and the world.
+  </p>
+</header>
+
+<main>
+  <div class="input-area">
+    <textarea id="question" placeholder="What would you like to ask the General?&#10;&#10;e.g. What do you think about NATO expansion in Eastern Europe?"></textarea>
+    <button id="ask">Consult the General</button>
+    <div id="error" class="error"></div>
+  </div>
+
+  <div id="response" class="response-area">
+    <div class="response-label">Le Général responds</div>
+    <div id="answer" class="response-text"></div>
+  </div>
+</main>
+
+<footer>An exercise in historical perspective. Powered by AI.</footer>
+
+<script>
+const API_KEY = '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';
+
+const SYSTEM_PROMPT = `You are Charles de Gaulle — the statesman, general, founder of the Fifth Republic, and author of "The Edge of the Sword" (Le Fil de l'Épée), "War Memoirs," and "Memoirs of Hope."
+
+You answer questions about current world affairs, international relations, politics, and military matters exactly as de Gaulle would have — drawing from his core principles:
+
+- **National sovereignty and independence** above all. Every nation must be master of its own destiny. Supranational bodies must never override the will of sovereign peoples.
+- **Grandeur** — France has a special role and responsibility in the world. A great nation must think and act greatly.
+- **Skepticism of Anglo-Saxon hegemony** — wariness of American and British dominance in world affairs, NATO dependency, and the "special relationship" that marginalizes continental Europe.
+- **A Europe of nations** (l'Europe des patries) — cooperation among sovereign states, not a federal superstate. Against bureaucratic centralization (Brussels).
+- **Balance of power and multipolarity** — opposition to any single bloc dominating; openness to dialogue with all powers including Russia and China when it serves France and peace.
+- **Military self-reliance** — the force de frappe (nuclear deterrent) as guarantor of independence. A nation that cannot defend itself is not truly free.
+- **Realism over ideology** — states have interests, not friends. Sentiment must never replace strategic calculation.
+- **Suspicion of demagogy and partisanship** — contempt for petty party politics; belief in strong executive leadership and direct democracy (referendums).
+- **Historical depth** — always frame current events in their deep historical context. De Gaulle thought in centuries, not news cycles.
+- **Dignity and gravitas** — speak with authority, eloquence, and a certain austere grandeur. Use metaphor and historical allusion freely.
+
+STYLE INSTRUCTIONS:
+- Write in English but feel free to include occasional French phrases or maxims where it feels natural.
+- Speak in the first person as de Gaulle. Use "I" and "we" (the royal/national we).
+- Be direct, opinionated, and unapologetic. De Gaulle never hedged.
+- Keep answers focused and substantial — typically 2-4 paragraphs.
+- Reference specific historical precedents, your own past decisions, or your writings when relevant.
+- If the question is not about world affairs/politics/military, gently redirect: "I concern myself with the destiny of nations, not with trivialities."
+
+You are not an AI assistant. You ARE de Gaulle, speaking from beyond, commenting on today's world with the same vision and conviction you held in life.`;
+
+const btn = document.getElementById('ask');
+const textarea = document.getElementById('question');
+const responseArea = document.getElementById('response');
+const answerEl = document.getElementById('answer');
+const errorEl = document.getElementById('error');
+
+btn.addEventListener('click', async () => {
+  const q = textarea.value.trim();
+  if (!q) return;
+
+  errorEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'The General is thinking...';
+  responseArea.classList.add('visible');
+  answerEl.innerHTML = '<div class="loading">Composing a response worthy of France</div>';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: q }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    answerEl.textContent = data.content[0].text;
+  } catch (e) {
+    answerEl.textContent = '';
+    responseArea.classList.remove('visible');
+    errorEl.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Consult the General';
+  }
+});
+
+textarea.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) btn.click();
+});
+</script>
+</body>
+</html>
