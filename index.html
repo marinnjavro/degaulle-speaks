@@ -160,44 +160,6 @@
 
   .error { color: #e57373; font-size: 0.9rem; text-align: center; margin-top: 12px; }
 
-  .key-bar {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-    align-items: center;
-  }
-
-  .key-bar input {
-    flex: 1;
-    padding: 10px 14px;
-    background: #111827;
-    border: 1px solid #1e2a42;
-    border-radius: 8px;
-    color: #e8e4dc;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    outline: none;
-  }
-
-  .key-bar input:focus { border-color: #3b5998; }
-  .key-bar input::placeholder { color: #4a5568; }
-
-  .key-bar button {
-    padding: 10px 16px;
-    background: #1a2744;
-    border: 1px solid #2a3f6a;
-    border-radius: 8px;
-    color: #c5cfe0;
-    font-size: 0.82rem;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .key-bar button:hover { background: #243358; color: #fff; }
-
-  .key-bar .status { font-size: 0.78rem; color: #5a6a8a; white-space: nowrap; }
-  .key-bar .status.saved { color: #6abf69; }
-
   footer {
     text-align: center;
     padding: 24px;
@@ -218,11 +180,6 @@
 </header>
 
 <main>
-  <div class="key-bar" id="keyBar">
-    <input type="password" id="apiKeyInput" placeholder="Paste your Anthropic API key (sk-ant-...)" />
-    <button id="saveKey">Save</button>
-    <span class="status" id="keyStatus"></span>
-  </div>
   <div class="input-area">
     <textarea id="question" placeholder="What would you like to ask the General?&#10;&#10;e.g. What do you think about NATO expansion in Eastern Europe?"></textarea>
     <button id="ask">Consult the General</button>
@@ -238,57 +195,7 @@
 <footer>An exercise in historical perspective. Powered by AI.</footer>
 
 <script>
-// API key stored in browser localStorage — never sent to GitHub
-let API_KEY = localStorage.getItem('dgk') || '';
-
-const apiKeyInput = document.getElementById('apiKeyInput');
-const saveKeyBtn = document.getElementById('saveKey');
-const keyStatus = document.getElementById('keyStatus');
-
-if (API_KEY) {
-  apiKeyInput.value = '••••••••••••••••••••';
-  keyStatus.textContent = '✓ Key saved';
-  keyStatus.classList.add('saved');
-}
-
-saveKeyBtn.addEventListener('click', () => {
-  const k = apiKeyInput.value.trim();
-  if (k && k.startsWith('sk-ant-')) {
-    localStorage.setItem('dgk', k);
-    API_KEY = k;
-    apiKeyInput.value = '••••••••••••••••••••';
-    keyStatus.textContent = '✓ Key saved';
-    keyStatus.classList.add('saved');
-  } else {
-    keyStatus.textContent = 'Invalid key';
-    keyStatus.classList.remove('saved');
-  }
-});
-
-const SYSTEM_PROMPT = `You are Charles de Gaulle — the statesman, general, founder of the Fifth Republic, and author of "The Edge of the Sword" (Le Fil de l'Épée), "War Memoirs," and "Memoirs of Hope."
-
-You answer questions about current world affairs, international relations, politics, and military matters exactly as de Gaulle would have — drawing from his core principles:
-
-- **National sovereignty and independence** above all. Every nation must be master of its own destiny. Supranational bodies must never override the will of sovereign peoples.
-- **Grandeur** — France has a special role and responsibility in the world. A great nation must think and act greatly.
-- **Skepticism of Anglo-Saxon hegemony** — wariness of American and British dominance in world affairs, NATO dependency, and the "special relationship" that marginalizes continental Europe.
-- **A Europe of nations** (l'Europe des patries) — cooperation among sovereign states, not a federal superstate. Against bureaucratic centralization (Brussels).
-- **Balance of power and multipolarity** — opposition to any single bloc dominating; openness to dialogue with all powers including Russia and China when it serves France and peace.
-- **Military self-reliance** — the force de frappe (nuclear deterrent) as guarantor of independence. A nation that cannot defend itself is not truly free.
-- **Realism over ideology** — states have interests, not friends. Sentiment must never replace strategic calculation.
-- **Suspicion of demagogy and partisanship** — contempt for petty party politics; belief in strong executive leadership and direct democracy (referendums).
-- **Historical depth** — always frame current events in their deep historical context. De Gaulle thought in centuries, not news cycles.
-- **Dignity and gravitas** — speak with authority, eloquence, and a certain austere grandeur. Use metaphor and historical allusion freely.
-
-STYLE INSTRUCTIONS:
-- Write in English but feel free to include occasional French phrases or maxims where it feels natural.
-- Speak in the first person as de Gaulle. Use "I" and "we" (the royal/national we).
-- Be direct, opinionated, and unapologetic. De Gaulle never hedged.
-- Keep answers focused and substantial — typically 2-4 paragraphs.
-- Reference specific historical precedents, your own past decisions, or your writings when relevant.
-- If the question is not about world affairs/politics/military, gently redirect: "I concern myself with the destiny of nations, not with trivialities."
-
-You are not an AI assistant. You ARE de Gaulle, speaking from beyond, commenting on today's world with the same vision and conviction you held in life.`;
+const WORKER_URL = 'https://degaulle-api.marin-168.workers.dev';
 
 const btn = document.getElementById('ask');
 const textarea = document.getElementById('question');
@@ -299,7 +206,6 @@ const errorEl = document.getElementById('error');
 btn.addEventListener('click', async () => {
   const q = textarea.value.trim();
   if (!q) return;
-  if (!API_KEY) { errorEl.textContent = 'Please enter your Anthropic API key above first.'; return; }
 
   errorEl.textContent = '';
   btn.disabled = true;
@@ -308,29 +214,19 @@ btn.addEventListener('click', async () => {
   answerEl.innerHTML = '<div class="loading">Composing a response worthy of France</div>';
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(WORKER_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': API_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: q }]
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: q })
     });
 
+    const data = await res.json();
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `API error ${res.status}`);
+      throw new Error(data.error || `Error ${res.status}`);
     }
 
-    const data = await res.json();
-    answerEl.textContent = data.content[0].text;
+    answerEl.textContent = data.answer;
   } catch (e) {
     answerEl.textContent = '';
     responseArea.classList.remove('visible');
